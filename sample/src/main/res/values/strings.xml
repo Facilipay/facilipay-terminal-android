@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Facilipay Gift Sample</string>
+    <string name="amount_hint">Amount, for example 5.00</string>
+    <string name="top_up_paid">Top up (my app took the money)</string>
+    <string name="top_up_charge">Top up (Facilipay charges the card)</string>
+    <string name="redeem">Redeem</string>
+    <string name="allow_partial">Allow a partial redeem</string>
+    <string name="balance">Check balance</string>
+    <string name="resend">Send the last request again (same id)</string>
+    <string name="nothing_to_resend">There is no request waiting for a final result.</string>
+    <string name="availability_ready">Facilipay is ready.</string>
+    <string name="availability_not_installed">Facilipay is not installed on this terminal.</string>
+    <string name="availability_not_supported">This Facilipay version is too old. Ask the merchant to update Facilipay.</string>
+    <string name="availability_permission_missing">This app was installed before Facilipay. Reinstall this app.</string>
+    <string name="next_done">Done.</string>
+    <string name="next_start_new">Nothing was posted or charged. You can try again.</string>
+    <string name="next_resend">Not final yet. Use "Send the last request again" when the terminal is free.</string>
+    <string name="next_fix">Fix the cause above (for example, log in to Facilipay), then try again.</string>
+    <string name="next_refund">Ask the merchant to refund the card payment.</string>
+    <string name="next_check_payment">The card may have been charged. Ask the merchant to check the payment before charging again.</string>
+</resources>

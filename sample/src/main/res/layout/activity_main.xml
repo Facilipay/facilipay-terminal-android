@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/availability"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/amount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/amount_hint"
+            android:importantForAutofill="no"
+            android:inputType="numberDecimal"
+            android:text="5.00" />
+
+        <Button
+            android:id="@+id/topUpPaid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/top_up_paid" />
+
+        <Button
+            android:id="@+id/topUpCharge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/top_up_charge" />
+
+        <Button
+            android:id="@+id/redeem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/redeem" />
+
+        <CheckBox
+            android:id="@+id/allowPartial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/allow_partial" />
+
+        <Button
+            android:id="@+id/balance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/balance" />
+
+        <Button
+            android:id="@+id/resend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/resend" />
+
+        <TextView
+            android:id="@+id/result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:textIsSelectable="true"
+            android:typeface="monospace" />
+    </LinearLayout>
+</ScrollView>
