@@ -82,3 +82,7 @@ helpers; each snippet says what to replace them with.
 `-PfacilipayMaven=<url or path>` builds against another Maven repository, for example the staging
 site (`https://dev-developers.facilipay.io/maven`). `-PterminalSdkVersion=<version>` picks the SDK
 version.
+
+## Licence
+
+The sample is released under the [Apache License 2.0](LICENSE).
