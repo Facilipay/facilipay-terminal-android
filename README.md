@@ -51,7 +51,7 @@ No manifest changes are needed: the SDK declares Facilipay's permission for you.
 project with `minSdk` 21 or higher and depends only on `androidx.activity`.
 
 Can't add an Android library (Flutter, React Native, Xamarin)? Use the
-[intent protocol](https://developers.facilipay.io/terminal/reference/intent-protocol/) directly:
+[intent protocol](https://developers.facilipay.io/terminal/reference/intent-protocol.html) directly:
 it is what the SDK wraps, and needs nothing from us.
 
 ## Checking what you download

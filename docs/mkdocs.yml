@@ -12,6 +12,10 @@
 
 site_name: Facilipay Terminal SDK
 site_url: !ENV [TERMINAL_SITE_URL, "https://developers.facilipay.io/terminal/"]
+# Pages are files (get-started.html), not folders: the developer site's CloudFront serves exact
+# objects and doesn't add index.html to a folder URL. Publishing uploads index.html a second time
+# as the object terminal/, so the bare /terminal/ URL works too.
+use_directory_urls: false
 site_description: >-
   Start gift card top-ups, redemptions and balance checks in Facilipay from your own Android app
   on a Facilipay terminal.
@@ -53,7 +57,6 @@ extra_css:
 
 extra:
   generator: false
-  homepage: https://developers.facilipay.io/terminal/
 
 markdown_extensions:
   - admonition

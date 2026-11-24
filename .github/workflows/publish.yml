@@ -166,6 +166,10 @@ jobs:
           # Refuse to sync an empty or missing site: --delete would empty terminal/.
           test -s artifact/docs/site/index.html
           aws s3 sync artifact/docs/site/ "s3://$BUCKET/terminal/" --delete --cache-control "public, max-age=60"
+          # CloudFront asks S3 for the object "terminal/" when someone opens /terminal/ and doesn't
+          # add index.html, so the home page is uploaded under that name as well.
+          aws s3api put-object --bucket "$BUCKET" --key terminal/ --body artifact/docs/site/index.html \
+            --content-type "text/html" --cache-control "public, max-age=60"
 
       - name: Refresh the CDN
         run: |
