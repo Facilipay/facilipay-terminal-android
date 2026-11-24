@@ -1,0 +1,4 @@
+# Builds the public guide at developers.facilipay.io/terminal/ (see mkdocs.yml).
+mkdocs-material==9.6.23
+mkdocs-llmstxt==0.3.2
+pymdown-extensions==10.21.3

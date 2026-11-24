@@ -1,0 +1,6 @@
+# Built site, and the local virtualenv from the build steps in mkdocs.yml.
+site/
+.venv/
+
+# Generated at build time by Dokka (see mkdocs.yml).
+pages/api/
