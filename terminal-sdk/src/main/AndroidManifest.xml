@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Merged into the integrator's app, so it needs nothing in its own manifest to call Facilipay. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Defined by Facilipay with protectionLevel="normal". Android grants it only if Facilipay is
+         installed before the integrator's app; FacilipayGift.availability() reports when it is not. -->
+    <uses-permission android:name="com.facilipay.pax.pos.permission.GIFT_INTEGRATION" />
+
+    <!-- Package visibility (Android 11+): lets availability() see Facilipay and its entry point. -->
+    <queries>
+        <package android:name="com.facilipay.pax.pos" />
+    </queries>
+</manifest>

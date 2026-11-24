@@ -1,0 +1,2 @@
+# The protocol file is read by strict parsers here and in Facilipay's app: keep LF line endings.
+protocol/*.properties text eol=lf
