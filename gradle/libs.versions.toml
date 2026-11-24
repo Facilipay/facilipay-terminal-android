@@ -1,0 +1,25 @@
+# Versions for the Terminal SDK library. The sample keeps its own plain coordinates, as an
+# integrator's app would.
+[versions]
+androidGradlePlugin = "9.3.1"
+# Built-in Kotlin in AGP 9 uses this compiler when it is on the root classpath.
+kotlin = "2.4.10"
+dokka = "2.2.0"
+# The oldest androidx.activity with ActivityResultContract, on purpose: an integrator's newer one
+# wins, and older projects still resolve it. Don't raise it (Dependabot ignores it).
+androidxActivityTerminalSdk = "1.2.4"
+junit4 = "4.13.2"
+androidxTestRunner = "1.7.0"
+androidxTestExt = "1.3.0"
+
+[libraries]
+androidx-activity-terminal-sdk = { group = "androidx.activity", name = "activity", version.ref = "androidxActivityTerminalSdk" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

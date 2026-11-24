@@ -1,0 +1,202 @@
+name: Publish
+
+# Publishes the library (io.facilipay:terminal-sdk) and the guide to the developer site:
+#
+#   - a manual run on main, with a release candidate (1.2.3-rc.1): staging,
+#     https://dev-developers.facilipay.io/terminal/ and /maven/;
+#   - a v<x.y.z> tag: production, https://developers.facilipay.io/terminal/ and /maven/.
+#
+# Who can publish is decided outside this file: the GitHub environments (staging deploys only from
+# main; production only from v* tags, after a named reviewer approves), the tag ruleset, and the
+# AWS roles' trust policies, which accept only this repository's environment subjects. Never add
+# pull_request_target or workflow_run triggers here.
+#
+# Each environment holds the variables DOCS_ROLE_ARN, DOCS_BUCKET and DOCS_DISTRIBUTION_ID. They
+# show in the public logs; they aren't secrets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release candidate to publish to staging, for example 1.0.0-rc.1'
+        required: true
+        type: string
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions: {}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  AWS_REGION: eu-west-1
+  GROUP_PATH: io/facilipay/terminal-sdk
+
+jobs:
+  build:
+    name: Build ${{ github.ref_name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      environment: ${{ steps.version.outputs.environment }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Pick version and environment
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+              echo "::error::Run staging publishes from main, not $GITHUB_REF"; exit 1
+            fi
+            version="$INPUT_VERSION"
+            environment=staging
+            if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
+              echo "::error::Staging takes a release candidate (1.2.3-rc.1)"; exit 1
+            fi
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF#refs/tags/v}"
+            environment=production
+            if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::A release tag needs a final version (v1.2.3)"; exit 1
+            fi
+            # A release is cut from main. Not a security boundary (the production reviewer is),
+            # but it catches a tag on the wrong commit before anyone is asked to approve.
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "::error::$GITHUB_REF is not on main"; exit 1
+            fi
+          else
+            echo "::error::Unexpected trigger $GITHUB_EVENT_NAME on $GITHUB_REF"; exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "environment=$environment" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Java 21
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-disabled: true
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+
+      - name: Install the guide's tools
+        run: pip install -r docs/requirements.txt
+
+      - name: Build and check everything
+        run: scripts/build.sh "${{ steps.version.outputs.version }}" "${{ steps.version.outputs.environment }}"
+
+      - name: Keep the library and the guide
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: terminal-sdk-${{ steps.version.outputs.version }}
+          path: |
+            build/terminal-sdk-maven
+            docs/site
+          if-no-files-found: error
+
+  publish:
+    name: Publish to ${{ needs.build.outputs.environment }}
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: ${{ needs.build.outputs.environment }}
+    concurrency:
+      group: publish-${{ needs.build.outputs.environment }}
+      cancel-in-progress: false
+    # id-token: the OIDC token the environment's AWS role is assumed with.
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      BUCKET: ${{ vars.DOCS_BUCKET }}
+      DISTRIBUTION_ID: ${{ vars.DOCS_DISTRIBUTION_ID }}
+    steps:
+      - name: Check the environment's settings
+        env:
+          ROLE: ${{ vars.DOCS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          for name in ROLE BUCKET DISTRIBUTION_ID; do
+            [[ -n "${!name}" ]] || { echo "::error::The environment has no value for $name"; exit 1; }
+          done
+
+      - name: Check out the publishing scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts
+
+      - name: Download the library and the guide
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: terminal-sdk-${{ needs.build.outputs.version }}
+          path: artifact
+
+      - name: Assume the publishing role
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.DOCS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Publish the library
+        run: python3 scripts/publish_maven.py artifact/build/terminal-sdk-maven
+
+      - name: Publish the guide
+        run: |
+          set -euo pipefail
+          # Refuse to sync an empty or missing site: --delete would empty terminal/.
+          test -s artifact/docs/site/index.html
+          aws s3 sync artifact/docs/site/ "s3://$BUCKET/terminal/" --delete --cache-control "public, max-age=60"
+          # CloudFront asks S3 for the object "terminal/" when someone opens /terminal/ and doesn't
+          # add index.html, so the home page is uploaded under that name as well.
+          aws s3api put-object --bucket "$BUCKET" --key terminal/ --body artifact/docs/site/index.html \
+            --content-type "text/html" --cache-control "public, max-age=60"
+
+      - name: Refresh the CDN
+        run: |
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" \
+            --paths "/terminal/*" "/maven/$GROUP_PATH/maven-metadata.xml*"
+
+  attest:
+    name: Attest the published files
+    needs: [build, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # No AWS here: this job only records which workflow built the files Facilipay published.
+    permissions:
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download the library
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: terminal-sdk-${{ needs.build.outputs.version }}
+          path: artifact
+
+      - name: Attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            artifact/build/terminal-sdk-maven/io/facilipay/terminal-sdk/${{ needs.build.outputs.version }}/*.aar
+            artifact/build/terminal-sdk-maven/io/facilipay/terminal-sdk/${{ needs.build.outputs.version }}/*.pom
+            artifact/build/terminal-sdk-maven/io/facilipay/terminal-sdk/${{ needs.build.outputs.version }}/*.module
+            artifact/build/terminal-sdk-maven/io/facilipay/terminal-sdk/${{ needs.build.outputs.version }}/*.jar
