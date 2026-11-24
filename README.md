@@ -85,4 +85,6 @@ version.
 
 ## Licence
 
-The sample is released under the [Apache License 2.0](LICENSE).
+Released under the [MIT License](LICENSE).
+
+The Facilipay name and logo are trademarks of Facilipay and aren't covered by the licence.
