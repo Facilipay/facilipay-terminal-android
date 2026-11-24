@@ -1,9 +1,16 @@
-# Facilipay Terminal SDK sample
+# Facilipay Terminal SDK for Android
 
-A small Android app that shows how to use the
-[Facilipay Terminal SDK](https://developers.facilipay.io/terminal/) to run gift card operations in
-Facilipay from your own app on a Facilipay terminal: top-ups (paid by your app, or charged to the
-customer's card by Facilipay), redemptions and balance checks.
+Run gift card operations in Facilipay from your own Android app on a Facilipay terminal: top-ups
+(paid by your app, or charged to the customer's card by Facilipay), redemptions and balance checks.
+
+This repository holds:
+
+| | |
+|---|---|
+| [`terminal-sdk/`](terminal-sdk) | The library, `io.facilipay:terminal-sdk` |
+| [`sample/`](sample) | A small app that uses every part of it |
+| [`docs/`](docs) | The guide, published at [developers.facilipay.io/terminal](https://developers.facilipay.io/terminal/) |
+| [`protocol/`](protocol) | The intent protocol as one file, which the library and Facilipay are both tested against |
 
 **Read the guide first:** [developers.facilipay.io/terminal](https://developers.facilipay.io/terminal/).
 
@@ -15,7 +22,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://developers.facilipay.io/maven")
+        // Facilipay's repository, used only for io.facilipay artifacts.
+        exclusiveContent {
+            forRepository { maven("https://developers.facilipay.io/maven") }
+            filter { includeGroup("io.facilipay") }
+        }
     }
 }
 
@@ -36,7 +47,17 @@ private val gift = registerForActivityResult(FacilipayGift.Contract()) { result 
 gift.launch(GiftRequest.balance(requestId = UUID.randomUUID().toString()))
 ```
 
-No manifest changes are needed: the SDK declares Facilipay's permission for you.
+No manifest changes are needed: the SDK declares Facilipay's permission for you. It works in any
+project with `minSdk` 21 or higher and depends only on `androidx.activity`.
+
+Can't add an Android library (Flutter, React Native, Xamarin)? Use the
+[intent protocol](https://developers.facilipay.io/terminal/reference/intent-protocol/) directly:
+it is what the SDK wraps, and needs nothing from us.
+
+## Checking what you download
+
+Each published version has a build provenance attestation: see [SECURITY.md](SECURITY.md) for the
+`gh attestation verify` command.
 
 ## Run the sample
 
@@ -47,8 +68,6 @@ The sample builds with Android Gradle Plugin 9.3, Gradle 9.6 (through the wrappe
 later. AGP 9 compiles Kotlin itself; on AGP 8, add the `org.jetbrains.kotlin.android` plugin to
 `sample/build.gradle.kts`. Android Studio writes `local.properties` (your SDK path) when you open
 the project; on the command line, create it with `sdk.dir=/path/to/Android/sdk`.
-
-The SDK itself has no such requirements: it works in any project with `minSdk` 21 or higher.
 
 ```bash
 ./gradlew :sample:installDebug
@@ -64,7 +83,7 @@ Every result is also logged:
 adb logcat -s FacilipaySample
 ```
 
-## What's where
+### What's where in the sample
 
 | File | Shows |
 |---|---|
@@ -77,11 +96,43 @@ The code in the guide is taken from these files, so every snippet is part of an 
 Names a snippet doesn't define, such as `amountMinor()` or `pendingRequests`, are this app's own
 helpers; each snippet says what to replace them with.
 
-## Using another build of the SDK
+## Building from source
 
-`-PfacilipayMaven=<url or path>` builds against another Maven repository, for example the staging
-site (`https://dev-developers.facilipay.io/maven`). `-PterminalSdkVersion=<version>` picks the SDK
-version.
+The sample always uses the library as a published artifact, the way your app would. To run it
+against the library in this repository, publish it to a local folder first:
+
+```bash
+./gradlew :terminal-sdk:publishReleasePublicationToTerminalSdkRepository -PterminalSdkVersion=1.0.0-local
+./gradlew :sample:installDebug -PfacilipayMaven="file://$PWD/terminal-sdk/build/maven-repo" -PterminalSdkVersion=1.0.0-local
+```
+
+`-PfacilipayMaven=<url or path>` picks the Maven repository (for example the staging site,
+`https://dev-developers.facilipay.io/maven`) and `-PterminalSdkVersion=<version>` the version.
+
+`scripts/build.sh 0.0.0-pr` runs everything CI runs: the library's tests and lint, the local
+publish, the sample against it, and the guide in strict mode (it needs
+`pip install -r docs/requirements.txt`).
+
+## Changing the protocol
+
+[`protocol/gift-intent-protocol.properties`](protocol/gift-intent-protocol.properties) lists every
+name and value the library and Facilipay share. The library's `GiftProtocolContractTest` checks the
+library against it both ways, and Facilipay's app checks itself against a copy pinned to a commit
+of this repository. So a change lands here first (the file, the library and the guide), then in
+Facilipay. The file only grows: older Facilipay versions on terminals may still send a value, so
+removing one needs a new protocol version.
+
+## Releasing
+
+For maintainers. Publishing runs in [`publish.yml`](.github/workflows/publish.yml):
+
+- **Staging:** run the **Publish** workflow on `main` with a release candidate, such as
+  `1.0.0-rc.1`. It goes to [dev-developers.facilipay.io/terminal](https://dev-developers.facilipay.io/terminal/).
+- **Production:** push a tag `v<x.y.z>` on a commit on `main`, such as `v1.0.0`. A reviewer
+  approves the `production` deployment, and it goes to
+  [developers.facilipay.io/terminal](https://developers.facilipay.io/terminal/).
+
+A published version is never replaced: a fix needs a new version.
 
 ## Licence
 

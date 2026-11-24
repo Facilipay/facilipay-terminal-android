@@ -1,0 +1,19 @@
+# Keeps the pinned actions, the build's Gradle plugins and the guide's Python packages current.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: monthly
+    ignore:
+      # The library deliberately depends on the oldest androidx.activity with
+      # ActivityResultContract, so integrators' newer versions win (see terminal-sdk/build.gradle.kts).
+      - dependency-name: androidx.activity:activity
+  - package-ecosystem: pip
+    directory: /docs
+    schedule:
+      interval: monthly

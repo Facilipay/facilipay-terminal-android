@@ -1,0 +1,10 @@
+# Files that decide what gets built and published, or the protocol Facilipay's app checks itself
+# against, need a release owner's review.
+/.github/                       @osisupermoses @danielwilson1702
+/protocol/                      @osisupermoses @danielwilson1702
+/scripts/                       @osisupermoses @danielwilson1702
+/gradle/                        @osisupermoses @danielwilson1702
+/settings.gradle.kts            @osisupermoses @danielwilson1702
+/build.gradle.kts               @osisupermoses @danielwilson1702
+/terminal-sdk/build.gradle.kts  @osisupermoses @danielwilson1702
+/docs/requirements.txt          @osisupermoses @danielwilson1702
